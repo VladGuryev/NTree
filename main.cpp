@@ -1,7 +1,6 @@
 #include <iostream>
-//#include "ntree.h"
+#include "ntree.h"
 #include "ntreeserializer.h"
-
 
 using namespace std;
 using namespace ntree;
@@ -35,7 +34,7 @@ std::streamsize fileSize(std::fstream& fs)
 
 TreeNode createTestTree()
 {
-    TreeNode root = TreeNode{'F', {}};
+    TreeNode root = TreeNode{'B', {}};
     auto& list = root.childList;
     list.push_back({'W', {}});
     list.push_back({'S', {}});
@@ -46,7 +45,7 @@ TreeNode createTestTree()
     auto& children2 = front.childList;
     children2.push_back({'H', {}});
     children2.push_back({'G', {}});
-    children2.push_back({'B', {}});
+    children2.push_back({'X', {}});
 
     auto& last = list.back();
     auto& children = last.childList;
@@ -78,7 +77,6 @@ int main()
     output.write(buffer.data(), buffer.size());
     output.close();
     cout << "tree serialized\n";
-
 
     // Open the stream to 'lock' the file.
     std::fstream input("NTree_serialized.data", std::ios::in | std::ios::binary);

@@ -3,32 +3,37 @@
 #include <vector>
 #include <sstream>
 #include <cstddef>
+
 namespace ntree {
 
 
 void NTreeSerializer::serialize(const TreeNode &node,
                                 std::vector<char> &buffer)
 {
-    if(node.value == -1)
+    // tree|subtree is empty
+    if(!node.value.has_value())
     {
-        buffer.push_back('*');
+        return;
     }
-    else
+
+    serializeAny(node.value, buffer);
+
+    //serialize childList count!
+    auto childListSize = node.childList.size();
+    buffer.push_back(childListSize);
+
+    for(auto& child: node.childList)
     {
-        char value = node.value; //std::any
-        buffer.push_back(value);
-
-        auto childListSize = node.childList.size();
-        buffer.push_back(childListSize);
-
-        for (auto& child: node.childList) {
-            serialize(child, buffer);
-        }
+        serialize(child, buffer);
     }
 }
 
 TreeNode NTreeSerializer::deserialize(const std::vector<char>& buffer)
 {
+    if(buffer.empty())
+    {
+        return TreeNode{};
+    }
     int index = 0;
     return buildTree(buffer, index);
 }
@@ -36,11 +41,6 @@ TreeNode NTreeSerializer::deserialize(const std::vector<char>& buffer)
 TreeNode NTreeSerializer::buildTree(const std::vector<char>& buffer, int& index)
 {
     char val = poll(buffer,index);
-
-    if (val == '*')
-    {
-        return TreeNode{};
-    }
 
     TreeNode node = TreeNode{ val, {} };
 
@@ -58,41 +58,41 @@ TreeNode NTreeSerializer::buildTree(const std::vector<char>& buffer, int& index)
 /*
  * удалить позже
  */
-void ntreeTraverse(const TreeNode &node, int& depth);
+//void ntreeTraverse(const TreeNode &node, int& depth);
 
-void printTree(const TreeNode &root)
-{
-    int recursiveDepth = 0;
-    ntreeTraverse(root, recursiveDepth);
-}
+//void printTree(const TreeNode &root)
+//{
+//    int recursiveDepth = 0;
+//    ntreeTraverse(root, recursiveDepth);
+//}
 
-void ntreeTraverse(const TreeNode &node, int& depth)
-{
-    using namespace std;
+//void ntreeTraverse(const TreeNode &node, int& depth)
+//{
+//    using namespace std;
 
-    for(int i = 0; i < depth; i++)
-    {
-        std::cout  << "    | ";
-    }
+//    for(int i = 0; i < depth; i++)
+//    {
+//        std::cout  << "    | ";
+//    }
 
-    cout << (char)node.value;
-    std::cout << std::endl;
+//    cout << (char)node.value;
+//    std::cout << std::endl;
 
-    depth++;
+//    depth++;
 
-    if(node.childList.empty())
-    {
-        depth--;
-        return;
-    }
-    else
-    {
-        for(const auto& node : node.childList)
-        {
-            ntreeTraverse(node, depth);
-        }
-        depth--;
-    }
-}
+//    if(node.childList.empty())
+//    {
+//        depth--;
+//        return;
+//    }
+//    else
+//    {
+//        for(const auto& node : node.childList)
+//        {
+//            ntreeTraverse(node, depth);
+//        }
+//        depth--;
+//    }
+//}
 
 } // ntree

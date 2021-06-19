@@ -6,18 +6,12 @@
 #include <vector>
 #include <queue>
 #include <string>
-//#include "ntree.h"
+
+#include "ntree.h"
 
 #include <list>
 
 namespace ntree {
-
-
-struct TreeNode
-{
-    char                value;
-    std::list<TreeNode> childList;
-};
 
 class NTreeSerializer
 {
@@ -38,8 +32,6 @@ private:
     }
 
 };
-
-void printTree(const TreeNode &root);
 
 } // ntree
 
