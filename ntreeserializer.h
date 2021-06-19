@@ -15,7 +15,7 @@ namespace ntree {
 
 struct TreeNode
 {
-    char                key = -1;
+    char                value;
     std::list<TreeNode> childList;
 };
 
@@ -24,12 +24,20 @@ class NTreeSerializer
 public:
     NTreeSerializer() = default;
 
-    void serialize(const TreeNode &root, std::vector<std::string> &str);
+    void serialize(const TreeNode &node, std::vector<char> &str);
 
-    TreeNode deserialize(const std::vector<std::string> &str);
+    TreeNode deserialize(const std::vector<char> &buffer);
 
 private:
-    TreeNode buildTree(std::queue<std::string>& queue);
+    TreeNode buildTree(std::queue<char> &queue);
+
+    template<typename T>
+    auto poll(std::queue<T>& queue)
+    {
+        auto value = queue.front();
+        queue.pop();
+        return value;
+    }
 
 };
 

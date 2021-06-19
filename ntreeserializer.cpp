@@ -2,69 +2,67 @@
 
 #include <vector>
 #include <sstream>
-
+#include <cstddef>
 namespace ntree {
 
 
-void NTreeSerializer::serialize(const TreeNode &root,
-                                 std::vector<std::string> &str)
+void NTreeSerializer::serialize(const TreeNode &node,
+                                std::vector<char> &buffer)
 {
-    if(root.key == -1)
+    if(node.value == -1)
     {
-        str.push_back("*");
+        buffer.push_back('*');
     }
     else
     {
-        char key = root.key;
-        std::string key_str;
-        key_str.push_back(key);
-        str.push_back(key_str);
+        char value = node.value; //std::any
+        buffer.push_back(value);
 
-        auto size = std::to_string(root.childList.size());
+        auto childListSize = node.childList.size();
+        buffer.push_back(childListSize);
 
-        str.push_back(size);
-
-        for (auto& child: root.childList) {
-            serialize(child, str);
+        for (auto& child: node.childList) {
+            serialize(child, buffer);
         }
     }
 }
 
-TreeNode NTreeSerializer::deserialize(const std::vector<std::string>& vec)
+TreeNode NTreeSerializer::deserialize(const std::vector<char>& buffer)
 {
-    std::queue<std::string> queue;
+    std::queue<char> queue;
 
-    for(const auto& tmp: vec)
+    for(const auto& tmp: buffer)
     {
         queue.push(tmp);
     }
     return buildTree(queue);
 }
 
-TreeNode NTreeSerializer::buildTree(std::queue<std::string>& queue)
+TreeNode NTreeSerializer::buildTree(std::queue<char>& queue)
 {
-    std::string val = queue.front();
-    queue.pop();
-    if (val == std::string("*"))
+    char val = poll(queue);
+
+    if (val == '*')
     {
         return TreeNode{};
     }
 
-    TreeNode root = TreeNode{val[0],{}};
+    TreeNode node = TreeNode{ val,{} };
 
-    std::istringstream ss(queue.front());
-    queue.pop();
+    int childrenCount = poll(queue);
+    auto& childList = node.childList;
 
-    int childrenCount = 0;
-    ss >> childrenCount;
-
-    auto& childList = root.childList;
-    for (int i = 0; i <  childrenCount; i++) {
+    for (int i = 0; i < childrenCount; i++)
+    {
         childList.push_back(buildTree(queue));
     }
-    return root;
+
+    return node;
 }
 
+/*
+ * удалить позже
+ */
 void ntreeTraverse(const TreeNode &node, int& depth);
 
 void printTree(const TreeNode &root)
@@ -82,7 +80,7 @@ void ntreeTraverse(const TreeNode &node, int& depth)
         std::cout  << "    | ";
     }
 
-    cout << (char)node.key;
+    cout << (char)node.value;
     std::cout << std::endl;
 
     depth++;
