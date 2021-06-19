@@ -35,7 +35,7 @@ std::streamsize fileSize(std::fstream& fs)
 
 TreeNode createTestTree()
 {
-    TreeNode root = TreeNode{'Q', {}};
+    TreeNode root = TreeNode{'F', {}};
     auto& list = root.childList;
     list.push_back({'W', {}});
     list.push_back({'S', {}});

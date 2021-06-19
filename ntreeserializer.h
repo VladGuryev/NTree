@@ -29,14 +29,12 @@ public:
     TreeNode deserialize(const std::vector<char> &buffer);
 
 private:
-    TreeNode buildTree(std::queue<char> &queue);
+    TreeNode buildTree(const std::vector<char>& buffer, int& index);
 
     template<typename T>
-    auto poll(std::queue<T>& queue)
+    auto poll(const std::vector<T>& vec, int& index)
     {
-        auto value = queue.front();
-        queue.pop();
-        return value;
+        return vec[index++];
     }
 
 };

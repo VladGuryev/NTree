@@ -29,32 +29,27 @@ void NTreeSerializer::serialize(const TreeNode &node,
 
 TreeNode NTreeSerializer::deserialize(const std::vector<char>& buffer)
 {
-    std::queue<char> queue;
-
-    for(const auto& tmp: buffer)
-    {
-        queue.push(tmp);
-    }
-    return buildTree(queue);
+    int index = 0;
+    return buildTree(buffer, index);
 }
 
-TreeNode NTreeSerializer::buildTree(std::queue<char>& queue)
+TreeNode NTreeSerializer::buildTree(const std::vector<char>& buffer, int& index)
 {
-    char val = poll(queue);
+    char val = poll(buffer,index);
 
     if (val == '*')
     {
         return TreeNode{};
     }
 
-    TreeNode node = TreeNode{ val,{} };
+    TreeNode node = TreeNode{ val, {} };
 
-    int childrenCount = poll(queue);
+    int childrenCount = poll(buffer,index);
     auto& childList = node.childList;
 
     for (int i = 0; i < childrenCount; i++)
     {
-        childList.push_back(buildTree(queue));
+        childList.push_back(buildTree(buffer,index));
     }
 
     return node;
