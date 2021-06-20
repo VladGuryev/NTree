@@ -1,12 +1,9 @@
 #include "ntree.h"
 
-#include <type_traits>
 #include <functional>
 #include <iomanip>
 #include <iostream>
 #include <typeindex>
-#include <typeinfo>
-#include <unordered_map>
 
 namespace ntree {
 
@@ -55,12 +52,12 @@ inline void printAny(const std::any& a)
 }
 
 //нигде не используется!
-template<class T, class F>
-inline void register_any_visitor(const F& f)
-{
-    std::cout << "Register visitor for type: " << std::quoted(typeid(T).name()) << std::endl;
-    printAnyVisitors.insert(to_any_visitor<T>(f));
-}
+//template<class T, class F>
+//inline void register_any_visitor(const F& f)
+//{
+//    std::cout << "Register visitor for type: " << std::quoted(typeid(T).name()) << std::endl;
+//    printAnyVisitors.insert(to_any_visitor<T>(f));
+//}
 
 static void ntreeTraverse(const TreeNode &node, int& depth);
 

@@ -6,7 +6,9 @@
 
 namespace ntree {
 
-
+/*
+ * N-ary tree node with unlimited amount of children
+ */
 struct TreeNode
 {
     std::any            value;

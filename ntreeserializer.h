@@ -1,13 +1,8 @@
 #ifndef NTREESERIALIZER_H
 #define NTREESERIALIZER_H
 
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <string>
 #include <typeindex>
 #include <functional>
-#include <unordered_map>
 
 #include "ntree.h"
 
@@ -21,7 +16,6 @@ public:
     NTreeSerializer();
 
     void serialize(const TreeNode &node, std::vector<char> &str);
-
     TreeNode deserialize(const std::vector<char> &buffer);
 
 private:
@@ -33,7 +27,7 @@ private:
         int typeNum    = 0;
     };
 
-    using serializer = std::function<void(const std::any&, std::vector<char>&)>;
+    using serializer   = std::function<void(const std::any&, std::vector<char>&)>;
     using deserializer = std::function<std::any(const std::vector<char>&, const TypeInfo&)>;
 
 private:
@@ -41,11 +35,11 @@ private:
     void serializeTree(const TreeNode &node, std::vector<char> &buffer);
     TreeNode deserializeTree(const std::vector<char>& buffer, int& index);
 
-    int registerType(const std::string &typeName);
-    int loadHeader(const std::vector<char>& buffer);
-
     void serializeAny(const std::any& a, std::vector<char>& buffer);
     std::any deserializeAny(const std::vector<char> &buffer, const TypeInfo &typeInfo);
+
+    int registerType(const std::string &typeName);
+    int loadHeader(const std::vector<char>& buffer);
 
 private:
 
