@@ -73,6 +73,19 @@ NTreeSerializer::NTreeSerializer()
     {
         to_any_serialize_visitor<char>(charSerializer)
     };
+
+    auto charDeserializer = [&](const std::vector<char> &buffer,
+                                const TypeInfo &typeInfo) ->std::any
+    {
+        char value;
+        if(typeInfo.objectSize == 1)
+            value = buffer[typeInfo.index];
+
+        std::cout << "char deserializer called!\n";
+
+        return value;
+    };
+    deserializeAnyVisitors["char"] = charDeserializer;
 }
 
 void NTreeSerializer::serializeAny(const std::any& a, std::vector<char>& buffer)
@@ -134,7 +147,8 @@ int NTreeSerializer::loadHeader(const std::vector<char> &buffer)
         loadFromBinary(typeName.data(), length, &buffer[index]);
         index += length;
 
-        addType(typeName);
+        int typeNumber = addType(typeName);
+        typeInfoReversed[typeNumber] = typeName;
     }
 
     for(const auto &[typeName, index] : typeInfo)
@@ -142,6 +156,12 @@ int NTreeSerializer::loadHeader(const std::vector<char> &buffer)
         std::cout << "deserialized typeName: " << typeName << "," << index << std::endl;
     }
     return headerByteCount;
+}
+
+std::any NTreeSerializer::deserializeAny(const std::vector<char> &buffer, const TypeInfo &typeInfo)
+{
+    std::string typeName(typeInfoReversed[typeInfo.typeNum]);
+    return deserializeAnyVisitors[typeName](buffer,typeInfo);
 }
 
 void NTreeSerializer::serialize(const TreeNode &node,
@@ -216,20 +236,28 @@ TreeNode NTreeSerializer::deserialize(const std::vector<char>& buffer)
 
 TreeNode NTreeSerializer::deserializeTree(const std::vector<char>& buffer, int& index)
 {
-    int typeNumber = 0;
-    loadFromBinary(&typeNumber, typeNumberSize, &buffer[index]);
+    TypeInfo typeInfo;
+    loadFromBinary(&typeInfo.typeNum, typeNumberSize, &buffer[index]);
     index += typeNumberSize;
 
     int objectSize = 0;
     loadFromBinary(&objectSize, objectWidthSize, &buffer[index]);
     index += objectWidthSize;
 
-    std::cout << "typeNumber: " << typeNumber << " " << "objectSize: " << objectSize << std::endl;
+    typeInfo.objectSize = objectSize;
+    typeInfo.index = index;
 
-    char val           = poll(buffer,index, objectSize);
-    int  childrenCount = poll(buffer,index, childCountSize);
+    std::cout << "typeNumber: " << typeInfo.typeNum << " " << "objectSize: " << typeInfo.objectSize << std::endl;
 
-    TreeNode node = TreeNode{ val, {} };
+    std::any value = deserializeAny(buffer, typeInfo);
+
+    index += objectSize;
+    int childrenCount = 0;
+    loadFromBinary(&childrenCount, childCountSize, &buffer[index]);
+
+    index += childCountSize;
+
+    TreeNode node = TreeNode{ value, {} };
     auto& childList = node.childList;
 
     for (int i = 0; i < childrenCount; i++)
