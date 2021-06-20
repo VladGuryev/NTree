@@ -4,25 +4,22 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <queue>
 #include <string>
+#include <typeindex>
+#include <functional>
+#include <unordered_map>
 
 #include "ntree.h"
 
-#include <list>
-
 namespace ntree {
 
-//struct TypeInfo
-//{
-//    unsigned short typeNumber;  // up to 65535 possible types
-//    std::string    typeName;    // typeName
-//};
 
 class NTreeSerializer
 {
 public:
-    NTreeSerializer() = default;
+    using serializer = std::function<void(const std::any&, std::vector<char>&)>;
+
+    NTreeSerializer();
 
     void serialize(const TreeNode &node, std::vector<char> &str);
 
@@ -30,9 +27,9 @@ public:
 
 private:
 
-    //void createPreambule(const Tree)
+    void serializeTree(const TreeNode &node, std::vector<char> &buffer);
 
-    TreeNode buildTree(const std::vector<char>& buffer, int& index);
+    TreeNode deserializeTree(const std::vector<char>& buffer, int& index);
 
     template<typename T>
     auto poll(const std::vector<T>& vec, int& index)
@@ -40,7 +37,30 @@ private:
         return vec[index++];
     }
 
+    void serializeAny(const std::any& a, std::vector<char>& buffer);
+    int addType(const std::string &typeName);
+
+    void SaveToBinary(const void* addr, std::size_t size, std::vector<char>& buffer) {
+        const char* ptr = reinterpret_cast<const char*>(addr);
+        for(std::size_t i = 0; i < size; i++)
+        {
+            char ch = *ptr;
+            buffer.push_back(ch);
+            ptr++;
+        }
+    }
+
+private:
+    std::vector<char> m_preambule;
+
+    int typeNumber = 1;
+    std::unordered_map<std::string, int> typeInfo;
+
+    std::unordered_map<std::type_index, serializer> serializeAnyVisitors;
+
+    //std::unordered_map<std::string, deserializer> deserializeAnyVisitors;
 };
+
 
 
 } // ntree
