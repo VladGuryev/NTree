@@ -50,9 +50,9 @@ TreeNode createTestTree()
 
     auto& last = list.back();
     auto& children = last.childList;
-    children.push_back({'P', {}});
-    children.push_back({'L', {}});
-    children.push_back({'K', {}});
+    children.push_back({12, {}});
+    children.push_back({13, {}});
+    children.push_back({14, {}});
 
     auto& last2 = children.back();
     auto& children3 = last2.childList;

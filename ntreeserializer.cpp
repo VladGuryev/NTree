@@ -19,7 +19,6 @@ namespace
     const int childCountSize  = 4; // 4 bytes for childCountSize   in binary file
 };
 
-
 template<class T, class F>
 inline std::pair<const std::type_index, std::function<void(const std::any&, std::vector<char>&)>>
 to_any_serialize_visitor(const F& f)
@@ -48,8 +47,7 @@ static void saveToBinary(const void* addr, std::size_t size, std::vector<char>& 
     }
 }
 
-
-void loadFromBinary(void* addr, std::size_t size, const char* buffer)
+static void loadFromBinary(void* addr, std::size_t size, const char* buffer)
 {
     memcpy(reinterpret_cast<char*>(addr), buffer, size);
 }
@@ -60,7 +58,7 @@ NTreeSerializer::NTreeSerializer()
                               std::vector<char>& buffer)
     {
         std::string typeName = "char";
-        int typeNum = addType(typeName);
+        int typeNum = registerType(typeName);
         saveToBinary(&typeNum, typeNumberSize, buffer);        // номер типа
 
         int sizeOfObject = sizeof(char);
@@ -69,10 +67,19 @@ NTreeSerializer::NTreeSerializer()
         buffer.push_back(value);                               // объект
     };
 
-    serializeAnyVisitors =
+    serializeAnyVisitors.insert( to_any_serialize_visitor<char>(charSerializer) );
+
+    auto intSerializer = [&](int value,
+                             std::vector<char>& buffer)
     {
-        to_any_serialize_visitor<char>(charSerializer)
+        std::string typeName = "int";
+        int typeNum = registerType(typeName);
+        saveToBinary(&typeNum, typeNumberSize, buffer);           // номер типа
+        saveToBinary(&objectWidthSize, objectWidthSize, buffer);  // размер объекта
+        saveToBinary(&value, objectWidthSize, buffer);            // объект
     };
+
+    serializeAnyVisitors.insert( to_any_serialize_visitor<int>(intSerializer) );
 
     auto charDeserializer = [&](const std::vector<char> &buffer,
                                 const TypeInfo &typeInfo) ->std::any
@@ -86,21 +93,30 @@ NTreeSerializer::NTreeSerializer()
         return value;
     };
     deserializeAnyVisitors["char"] = charDeserializer;
+
+    auto intDeserializer = [&](const std::vector<char> &buffer,
+                               const TypeInfo &typeInfo) ->std::any
+    {
+        int value;
+        if(typeInfo.objectSize == 4)
+        {
+            loadFromBinary(&value, typeInfo.objectSize, &buffer[typeInfo.index]);
+        }
+
+        std::cout << "int deserializer called!\n";
+
+        return value;
+    };
+    deserializeAnyVisitors["int"] = intDeserializer;
+
+    std::cout << "***********************\n";
+    for(auto& [type, i] : deserializeAnyVisitors)
+    {
+        std::cout << "deserialized type: " << type << std::endl;
+    }
+    std::cout << "***********************\n";
 }
 
-void NTreeSerializer::serializeAny(const std::any& a, std::vector<char>& buffer)
-{
-    if (const auto it =  serializeAnyVisitors.find(std::type_index(a.type()));
-        it !=  serializeAnyVisitors.cend())
-    {
-        it->second(a, buffer);
-    }
-    else
-    {
-        std::cout << "Unregistered type for serialization "<< std::quoted(a.type().name());
-        throw std::exception();
-    }
-}
 
 ////нигде не используется!
 //template<class T, class F>
@@ -110,7 +126,7 @@ void NTreeSerializer::serializeAny(const std::any& a, std::vector<char>& buffer)
 //    serializer.serializeAnyVisitors.insert(to_any_serialize_visitor<T>(f));
 //}
 
-int NTreeSerializer::addType(const std::string &typeName)
+int NTreeSerializer::registerType(const std::string &typeName)
 {
     auto it = typeInfo.find(typeName);
     if(it == typeInfo.end())
@@ -147,7 +163,7 @@ int NTreeSerializer::loadHeader(const std::vector<char> &buffer)
         loadFromBinary(typeName.data(), length, &buffer[index]);
         index += length;
 
-        int typeNumber = addType(typeName);
+        int typeNumber = registerType(typeName);
         typeInfoReversed[typeNumber] = typeName;
     }
 
@@ -158,10 +174,34 @@ int NTreeSerializer::loadHeader(const std::vector<char> &buffer)
     return headerByteCount;
 }
 
+void NTreeSerializer::serializeAny(const std::any& a, std::vector<char>& buffer)
+{
+    if (const auto it = serializeAnyVisitors.find(std::type_index(a.type()));
+        it !=  serializeAnyVisitors.cend())
+    {
+        it->second(a, buffer);
+    }
+    else
+    {
+        std::cout << "Unregistered type for serialization "<< std::quoted(a.type().name());
+        throw std::exception();
+    }
+}
+
 std::any NTreeSerializer::deserializeAny(const std::vector<char> &buffer, const TypeInfo &typeInfo)
 {
     std::string typeName(typeInfoReversed[typeInfo.typeNum]);
-    return deserializeAnyVisitors[typeName](buffer,typeInfo);
+
+    if (const auto it = deserializeAnyVisitors.find(typeName);
+        it !=  deserializeAnyVisitors.cend())
+    {
+        return it->second(buffer, typeInfo);
+    }
+    else
+    {
+        std::cout << "Unregistered type for deserialization "<< std::quoted(typeName);
+        throw std::exception();
+    }
 }
 
 void NTreeSerializer::serialize(const TreeNode &node,

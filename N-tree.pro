@@ -6,8 +6,10 @@ CONFIG -= qt
 SOURCES += \
         main.cpp \
         ntree.cpp \
-        ntreeserializer.cpp
+        ntreeserializer.cpp \
+        args.cpp
 
 HEADERS += \
     ntree.h \
-    ntreeserializer.h
+    ntreeserializer.h \
+    args.h
