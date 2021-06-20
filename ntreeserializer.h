@@ -13,6 +13,12 @@
 
 namespace ntree {
 
+//struct TypeInfo
+//{
+//    unsigned short typeNumber;  // up to 65535 possible types
+//    std::string    typeName;    // typeName
+//};
+
 class NTreeSerializer
 {
 public:
@@ -23,6 +29,9 @@ public:
     TreeNode deserialize(const std::vector<char> &buffer);
 
 private:
+
+    //void createPreambule(const Tree)
+
     TreeNode buildTree(const std::vector<char>& buffer, int& index);
 
     template<typename T>
@@ -32,6 +41,7 @@ private:
     }
 
 };
+
 
 } // ntree
 
