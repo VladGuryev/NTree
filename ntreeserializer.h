@@ -32,26 +32,19 @@ private:
     TreeNode deserializeTree(const std::vector<char>& buffer, int& index);
 
     template<typename T>
-    auto poll(const std::vector<T>& vec, int& index)
+    auto poll(const std::vector<T>& vec, int& index, int objectSize)
     {
-        return vec[index++];
+        int curIndex = index;
+        index += objectSize;
+        return vec[curIndex];
     }
 
     void serializeAny(const std::any& a, std::vector<char>& buffer);
     int addType(const std::string &typeName);
 
-    void SaveToBinary(const void* addr, std::size_t size, std::vector<char>& buffer) {
-        const char* ptr = reinterpret_cast<const char*>(addr);
-        for(std::size_t i = 0; i < size; i++)
-        {
-            char ch = *ptr;
-            buffer.push_back(ch);
-            ptr++;
-        }
-    }
+    int loadHeader(const std::vector<char>& buffer);
 
 private:
-    std::vector<char> m_preambule;
 
     int typeNumber = 1;
     std::unordered_map<std::string, int> typeInfo;
@@ -59,6 +52,7 @@ private:
     std::unordered_map<std::type_index, serializer> serializeAnyVisitors;
 
     //std::unordered_map<std::string, deserializer> deserializeAnyVisitors;
+
 };
 
 

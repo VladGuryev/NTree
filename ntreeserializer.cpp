@@ -4,7 +4,7 @@
 #include <sstream>
 #include <cstddef>
 #include <iomanip>
-
+#include <map>
 
 namespace ntree {
 
@@ -12,6 +12,8 @@ namespace ntree {
 // FormatInfo
 namespace
 {
+    const int headerSize      = 4; // 4 bytes for header with types
+
     const int typeNumberSize  = 4; // 4 bytes for typeNumber       in binary file
     const int objectWidthSize = 4; // 4 bytes for objectWidthSize  in binary file
     const int childCountSize  = 4; // 4 bytes for childCountSize   in binary file
@@ -35,6 +37,23 @@ to_any_serialize_visitor(const F& f)
         );
 }
 
+static void saveToBinary(const void* addr, std::size_t size, std::vector<char>& buffer)
+{
+    const char* ptr = reinterpret_cast<const char*>(addr);
+    for(std::size_t i = 0; i < size; i++)
+    {
+        char ch = *ptr;
+        buffer.push_back(ch);
+        ptr++;
+    }
+}
+
+
+void loadFromBinary(void* addr, std::size_t size, const char* buffer)
+{
+    memcpy(reinterpret_cast<char*>(addr), buffer, size);
+}
+
 NTreeSerializer::NTreeSerializer()
 {
     auto charSerializer = [&](char value,
@@ -42,12 +61,12 @@ NTreeSerializer::NTreeSerializer()
     {
         std::string typeName = "char";
         int typeNum = addType(typeName);
-        SaveToBinary(&typeNum, typeNumberSize, buffer);        // номер типа (4 байта)
+        saveToBinary(&typeNum, typeNumberSize, buffer);        // номер типа
 
         int sizeOfObject = sizeof(char);
-        SaveToBinary(&sizeOfObject, objectWidthSize, buffer);  // размер объекта (4байта)
+        saveToBinary(&sizeOfObject, objectWidthSize, buffer);  // размер объекта
 
-        buffer.push_back(value);                               // объект (неограничено кол-во байт)
+        buffer.push_back(value);                               // объект
     };
 
     serializeAnyVisitors =
@@ -89,16 +108,79 @@ int NTreeSerializer::addType(const std::string &typeName)
     return typeInfo[typeName];
 }
 
+int NTreeSerializer::loadHeader(const std::vector<char> &buffer)
+{
+    if(buffer.empty())
+    {
+        return 0;
+    }
+
+    typeNumber = 1;
+    typeInfo.clear();
+
+    int headerByteCount = 0;
+    loadFromBinary(&headerByteCount, headerSize, buffer.data());
+    std::cout << "\nheaderByteCount: " << headerByteCount << std::endl;
+
+    int index = headerSize;
+    while(index < headerByteCount)
+    {
+        int length = 0;
+        loadFromBinary(&length, objectWidthSize, &buffer[index]);
+        index += objectWidthSize;
+
+        std::string typeName;
+        typeName.resize(length);
+        loadFromBinary(typeName.data(), length, &buffer[index]);
+        index += length;
+
+        addType(typeName);
+    }
+
+    for(const auto &[typeName, index] : typeInfo)
+    {
+        std::cout << "deserialized typeName: " << typeName << "," << index << std::endl;
+    }
+    return headerByteCount;
+}
+
 void NTreeSerializer::serialize(const TreeNode &node,
                                 std::vector<char> &buffer)
 {
-    serializeTree(node,buffer);
+    std::vector<char> treeBuffer;
+    serializeTree(node,treeBuffer);
+
+    int headerByteCount = headerSize;
+    std::vector<char> headerBuffer;
 
     std::cout << "-------------------------------\n";
-    for(auto &pair : typeInfo)
+
+    std::map<int, std::string> typeInfoSorted;
+    // Чтобы перечень типов в хедере файла
+    // был отсортирован по возрастанию номера типа и не было необходимости хранить
+    // в хедере еще и номер типа рядом с его именем
+    for(const auto &[typeName, index] : typeInfo)
     {
-        std::cout << pair.first << "," << pair.second << std::endl;
+        typeInfoSorted[index] = typeName;
     }
+
+    for(const auto &[index, typeName] : typeInfoSorted)
+    {
+        int typeNameLength = typeName.length();
+        saveToBinary(&typeNameLength, objectWidthSize, headerBuffer);
+
+        saveToBinary(typeName.data(), typeNameLength, headerBuffer);
+
+        headerByteCount += objectWidthSize + typeNameLength;
+
+        std::cout << typeName << "," << index << std::endl;
+    }
+
+    saveToBinary(&headerByteCount, headerSize, buffer);
+
+    buffer.insert(std::end(buffer), std::begin(headerBuffer), std::end(headerBuffer));
+    buffer.insert(std::end(buffer), std::begin(treeBuffer), std::end(treeBuffer));
+
     std::cout << "-------------------------------\n";
 }
 
@@ -112,9 +194,8 @@ void NTreeSerializer::serializeTree(const TreeNode &node, std::vector<char> &buf
 
     serializeAny(node.value, buffer);
 
-    //serialize childList count!
     int childListSize = node.childList.size();
-    SaveToBinary(&childListSize, childCountSize, buffer);
+    saveToBinary(&childListSize, childCountSize, buffer);
 
     for(auto& child: node.childList)
     {
@@ -128,18 +209,28 @@ TreeNode NTreeSerializer::deserialize(const std::vector<char>& buffer)
     {
         return TreeNode{};
     }
-    int index = 0;
+
+    int index = loadHeader(buffer);
     return deserializeTree(buffer, index);
 }
 
 TreeNode NTreeSerializer::deserializeTree(const std::vector<char>& buffer, int& index)
 {
-    char val          = poll(buffer,index);
-    int childrenCount = poll(buffer,index);
+    int typeNumber = 0;
+    loadFromBinary(&typeNumber, typeNumberSize, &buffer[index]);
+    index += typeNumberSize;
+
+    int objectSize = 0;
+    loadFromBinary(&objectSize, objectWidthSize, &buffer[index]);
+    index += objectWidthSize;
+
+    std::cout << "typeNumber: " << typeNumber << " " << "objectSize: " << objectSize << std::endl;
+
+    char val           = poll(buffer,index, objectSize);
+    int  childrenCount = poll(buffer,index, childCountSize);
 
     TreeNode node = TreeNode{ val, {} };
     auto& childList = node.childList;
-
 
     for (int i = 0; i < childrenCount; i++)
     {
