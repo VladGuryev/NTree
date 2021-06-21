@@ -22,17 +22,33 @@ struct TypeInfo
     int typeNum    = 0; // Number of type in the header for deserialization
 };
 
+/**
+ * Platform dependant (de)serialization of types
+ */
+
 void saveToBinary(const void *addr, std::size_t size, std::vector<char> &buffer);
 
 void loadFromBinary(void* addr, std::size_t size, const char* buffer);
 
 void charSerializer(char value, int typeNum, std::vector<char>& buffer);
 
-std::any charDeserializer(const std::vector<char> &buffer, const TypeInfo &typeInfo);;
+std::any charDeserializer(const std::vector<char> &buffer, const TypeInfo &typeInfo);
 
 void intSerializer(int value, int typeNum, std::vector<char>& buffer);
 
-std::any intDeserializer(const std::vector<char> &buffer, const TypeInfo &typeInfo);;
+std::any intDeserializer(const std::vector<char> &buffer, const TypeInfo &typeInfo);
+
+void floatSerializer(float value, int typeNum, std::vector<char>& buffer);
+
+std::any floatDeserializer(const std::vector<char> &buffer, const TypeInfo &typeInfo);
+
+void doubleSerializer(double value, int typeNum, std::vector<char>& buffer);
+
+std::any doubleDeserializer(const std::vector<char> &buffer, const TypeInfo &typeInfo);
+
+void stdStringSerializer(const std::string& value, int typeNum, std::vector<char>& buffer);
+
+std::any stdStringDeserializer(const std::vector<char> &buffer, const TypeInfo &typeInfo);;
 
 } //ntree
 

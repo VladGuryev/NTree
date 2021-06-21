@@ -16,18 +16,15 @@ class NTreeSerializer
 
 public:
 
+    using serializer   = std::function<void(const std::any&, std::vector<char>&)>;
+    using deserializer = std::function<std::any(const std::vector<char>&, const TypeInfo&)>;
+
+public:
+
     NTreeSerializer() = default;
 
     void serialize(const TreeNode &node, std::vector<char> &str);
     TreeNode deserialize(const std::vector<char> &buffer);
-
-private:
-
-    template<class T, class F>
-    friend inline void register_any_serialize_visitor(NTreeSerializer& serializer,const F& f);
-
-    using serializer   = std::function<void(const std::any&, std::vector<char>&)>;
-    using deserializer = std::function<std::any(const std::vector<char>&, const TypeInfo&)>;
 
 private:
 
@@ -37,18 +34,10 @@ private:
     void serializeAny(const std::any& a, std::vector<char>& buffer);
     std::any deserializeAny(const std::vector<char> &buffer, const TypeInfo &typeInfo);
 
-    static int registerType(const std::string &typeName);
+    int saveHeader(std::vector<char> &buffer);
     int loadHeader(const std::vector<char>& buffer);
 
-    template<class T, class F>
-    friend inline void register_any_serialize_visitor(const F& f);
-
-    template<class F>
-    static inline std::pair<std::string, deserializer>
-    addDeserializer(const F& f, const std::string& typeName)
-    {
-         return std::make_pair(typeName, f);
-    }
+    static int registerType(const std::string &typeName);
 
     template<class T, class F>
     static inline std::pair<const std::type_index, serializer>
@@ -57,8 +46,7 @@ private:
         using namespace std::placeholders;
         auto serBinded = std::bind(f, _1, typeNumber, _2);
 
-        auto ser =  [g = serBinded]
-            (const std::any &a, std::vector<char>& buffer)
+        auto ser = [g = serBinded] (const std::any &a, std::vector<char>& buffer)
         {
             if constexpr (std::is_void_v<T>)
                 g();
@@ -69,6 +57,14 @@ private:
         return std::make_pair(std::type_index(typeid(T)), ser);
     }
 
+    static inline std::pair<std::string, deserializer>
+    addDeserializer(const deserializer& f, const std::string& typeName);
+
+    template<class T, class F>
+    friend inline void registerSerializer(const F& f, const std::string& typeName);
+
+    friend void registerDeserializer(const NTreeSerializer::deserializer& deserializer,
+                                     const std::string& typeName);
 private:
 
     static inline int typeNumber = 1;
@@ -80,11 +76,16 @@ private:
 };
 
 template<class T, class F>
-inline void register_any_serialize_visitor(const F& f)
+inline void registerSerializer(const F& serializer,
+                               const std::string& typeName)
 {
-    std::cout << "Register visitor for type: " << std::quoted(typeid(T).name()) << std::endl;
-    NTreeSerializer::serializeAnyVisitors.insert(NTreeSerializer::addSerializer<T>(f));
+    //std::cout << "Registered serializer for type: " << typeName << std::endl;
+    NTreeSerializer::serializeAnyVisitors.insert(
+        NTreeSerializer::addSerializer<T>(serializer, NTreeSerializer::registerType(typeName)));
 }
+
+void registerDeserializer(const NTreeSerializer::deserializer& deserializer,
+                          const std::string& typeName);
 
 } // ntree
 

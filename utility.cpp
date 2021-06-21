@@ -1,5 +1,7 @@
 #include "utility.h"
 
+#include "printtree.h"
+
 std::streamsize fileSize(std::fstream &fs)
 {
     if ( !fs.is_open() ) {
@@ -18,26 +20,26 @@ ntree::TreeNode createTestTree()
     TreeNode root = TreeNode{'B', {}};
     auto& list = root.childList;
     list.push_back({'W', {}});
-    list.push_back({'S', {}});
+    list.push_back({double(45.872), {}});
     list.push_back({'R', {}});
-    list.push_back({'T', {}});
+    list.push_back({double(852.989), {}});
 
     auto& front = list.front();
     auto& children2 = front.childList;
     children2.push_back({'H', {}});
-    children2.push_back({'G', {}});
-    children2.push_back({'X', {}});
+    children2.push_back({std::string("str_1A"), {}});
+    children2.push_back({std::string("str_2B"), {}});
 
     auto& last = list.back();
     auto& children = last.childList;
-    children.push_back({12, {}});
-    children.push_back({13, {}});
-    children.push_back({14, {}});
+    children.push_back({int(12), {}});
+    children.push_back({float(34.09), {}});
+    children.push_back({int(14), {}});
 
     auto& last2 = children.back();
     auto& children3 = last2.childList;
     children3.push_back({'E',{}});
-    children3.push_back({'U',{}});
+    children3.push_back({float(1.99),{}});
     children3.push_back({'A',{}});
 
     return root;

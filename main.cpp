@@ -1,5 +1,6 @@
 #include "cmdargparser.h"
 #include "utility.h"
+#include "printtree.h"
 
 //Supported command line arguments
 namespace
@@ -28,8 +29,19 @@ namespace
                                  "                 ./a.out --input=tree.data";
 }
 
+void registerSerializers()
+{
+    std::string typeName = "std::string";
+    ntree::registerSerializer<std::string>(ntree::stdStringSerializer, typeName);
+    ntree::registerDeserializer(ntree::stdStringDeserializer, typeName);
+    ntree::registerPrinter<std::string>([](const std::string& str){ std::cout << str; }, typeName);
+}
+
 int main(int argc, char* argv[])
 {
+    // For demonstration custom (de)serializers registration
+    registerSerializers();
+
     args::parse(argc, argv);
     bool supportedArgsPassed = false;
 

@@ -15,9 +15,6 @@ struct TreeNode
     std::list<TreeNode> childList;
 };
 
-void printTree(const TreeNode &node);
-
-
 } // ntree
 
 #endif // NTREE_H

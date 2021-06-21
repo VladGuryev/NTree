@@ -26,7 +26,6 @@ void loadFromBinary(void *addr, std::size_t size, const char *buffer)
 
 void charSerializer(char value, int typeNum, std::vector<char> &buffer)
 {
-    std::string typeName = "char";
     saveToBinary(&typeNum, typeNumberSize, buffer);        // номер типа
     int sizeOfObject = sizeof(char);
     saveToBinary(&sizeOfObject, objectWidthSize, buffer);  // размер объекта
@@ -36,31 +35,68 @@ void charSerializer(char value, int typeNum, std::vector<char> &buffer)
 std::any charDeserializer(const std::vector<char> &buffer, const TypeInfo &typeInfo)
 {
     char value;
-    if(typeInfo.objectSize == 1)
-    {
-        value = buffer[typeInfo.index];
-    }
+    value = buffer[typeInfo.index];
     return value;
 }
 
 void intSerializer(int value, int typeNum, std::vector<char> &buffer)
 {
-    std::string typeName = "int";
-    saveToBinary(&typeNum, typeNumberSize, buffer);        // номер типа
-    saveToBinary(&objectWidthSize,
-                 objectWidthSize, buffer);                 // размер объекта
-    saveToBinary(&value, objectWidthSize, buffer);         // объект
+    saveToBinary(&typeNum, typeNumberSize, buffer);         // номер типа
+    saveToBinary(&objectWidthSize,objectWidthSize, buffer); // размер объекта
+    saveToBinary(&value, objectWidthSize, buffer);          // объект
 }
 
 std::any intDeserializer(const std::vector<char> &buffer, const TypeInfo &typeInfo)
 {
     int value;
-    if(typeInfo.objectSize == 4)
-    {
-        loadFromBinary(&value, typeInfo.objectSize, &buffer[typeInfo.index]);
-    }
+    loadFromBinary(&value, typeInfo.objectSize, &buffer[typeInfo.index]);
     return value;
 }
 
+void floatSerializer(float value, int typeNum, std::vector<char> &buffer)
+{
+    saveToBinary(&typeNum, typeNumberSize, buffer);        // номер типа
+    int sizeOfFloat = sizeof(float);
+    saveToBinary(&sizeOfFloat, objectWidthSize, buffer);  // размер объекта
+    saveToBinary(&value, sizeOfFloat, buffer);            // объект
+}
+
+std::any floatDeserializer(const std::vector<char> &buffer, const TypeInfo &typeInfo)
+{
+    float value;
+    loadFromBinary(&value, typeInfo.objectSize, &buffer[typeInfo.index]);
+    return value;
+}
+
+void doubleSerializer(double value, int typeNum, std::vector<char> &buffer)
+{
+    saveToBinary(&typeNum, typeNumberSize, buffer);        // номер типа
+    int sizeOfDouble = sizeof(double);
+    saveToBinary(&sizeOfDouble, objectWidthSize, buffer);  // размер объекта
+    saveToBinary(&value, sizeOfDouble, buffer);            // объект
+}
+
+std::any doubleDeserializer(const std::vector<char> &buffer, const TypeInfo &typeInfo)
+{
+    double value;
+    loadFromBinary(&value, typeInfo.objectSize, &buffer[typeInfo.index]);
+    return value;
+}
+
+void stdStringSerializer(const std::string &value, int typeNum, std::vector<char> &buffer)
+{
+    saveToBinary(&typeNum, typeNumberSize, buffer);
+    int typeNameLength = value.length();
+    saveToBinary(&typeNameLength, objectWidthSize, buffer);
+    saveToBinary(value.data(), typeNameLength, buffer);
+}
+
+std::any stdStringDeserializer(const std::vector<char> &buffer, const TypeInfo &typeInfo)
+{
+    std::string value;
+    value.resize(typeInfo.objectSize);
+    loadFromBinary(value.data(), typeInfo.objectSize, &buffer[typeInfo.index]);
+    return value;
+}
 
 } // ntree
