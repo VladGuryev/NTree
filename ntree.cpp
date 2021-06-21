@@ -63,8 +63,14 @@ static void ntreeTraverse(const TreeNode &node, int& depth);
 
 void printTree(const TreeNode &node)
 {
+    if(!node.value.has_value())
+    {
+        return;
+    }
+    std::cout << "\nNTree:\n";
     int recursiveDepth = 0;
     ntreeTraverse(node, recursiveDepth);
+    std::cout << "\n";
 }
 
 void ntreeTraverse(const TreeNode &node, int& depth)

@@ -21,7 +21,7 @@ in the data section.
  - - - - -    - - - - -          - - - - -             - - - - -         - - - - -
 | 4 bytes |  | 4 bytes |        | N1 bytes |          | 4 bytes |       | N2 bytes |        . . . . . etc
  - - - - -    - - - - -          - - - - -             - - - - -         - - - - -
-          [N1 number] [Type number implied as 1]  [N2 number] [Type number implied as 2]
+          [N1 number] [Type number is implied to be 1]  [N2 number] [Type number is implied to be 2]
 						
 						
 *Data section structure is described on the picture below:

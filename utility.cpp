@@ -3,12 +3,11 @@
 std::streamsize fileSize(std::fstream &fs)
 {
     if ( !fs.is_open() ) {
-        //acout() << name() << "size():"<< "Error while opening file!\n";
         return false;
     }
     fs.ignore( std::numeric_limits<std::streamsize>::max() );
     std::streamsize length = fs.gcount();
-    fs.clear();   //  Since ignore will have set eof.
+    fs.clear();
     fs.seekg( 0, std::ios_base::beg );
     return length;
 }
@@ -49,35 +48,67 @@ void testNTree()
     using namespace std;
     using namespace ntree;
 
-    cout << "************************** Test **********************\n";
+    cout << "\n************************** Test **********************\n";
 
     auto root = createTestTree();
-    cout << "Programmatically generated NTree:\n\n";
+    cout << "Programmatically generated NTree:\n";
     printTree(root);
     cout << endl;
 
-    NTreeSerializer s;
-    std::vector<char> buffer;
+    serializeTree(root, "test_tree.data");
+    auto deserializedTree = deserializeFile("test_tree.data");
+    ntree::printTree(deserializedTree);
 
-    s.serialize(root, buffer);
+    cout << "************************** Test END ********************\n";
+}
 
-    std::string fileName = "output.data";
-    std::fstream output(fileName, std::ios::out | std::ios::binary);
-    output.write(buffer.data(), buffer.size());
-    output.close();
-    cout << "NTree serialized to file " << fileName <<".\n";
+ntree::TreeNode deserializeFile(const std::string &fileName)
+{
+    if(fileName.empty())
+    {
+        return ntree::TreeNode{};
+    }
 
     std::fstream input(fileName, std::ios::in | std::ios::binary);
-
-    buffer.clear();
     auto fz = fileSize(input);
-    buffer.resize(fz);
 
+    if(fz < 1)
+    {
+        std::cout << "Empty file passed for deserialization. Program will be stopped\n";
+        return ntree::TreeNode{};
+    }
+
+    ntree::NTreeSerializer s;
+    std::vector<char> buffer;
+
+    buffer.resize(fz);
     input.read(buffer.data(), fz);
 
-    auto root2 = s.deserialize(buffer);
+    auto root = s.deserialize(buffer);
 
-    cout << endl;
-    cout << "Deserialized NTree from file " << fileName << ":\n\n";
-    printTree(root2);
+    std::cout << "N-ary tree was deserialized from file " << fileName << std::endl;
+    return root;
+}
+
+void serializeTree(const ntree::TreeNode &node, const std::string& fileName)
+{
+    if(fileName.empty())
+    {
+        std::cout << "Empty file name provided for serialization. Program will be stopped.\n";
+        return;
+    }
+    if(!node.value.has_value())
+    {
+        std::cout << "Empty tree provided for serialization. Program will be stopped.\n";
+        return;
+    }
+    ntree::NTreeSerializer s;
+    std::vector<char> buffer;
+
+    s.serialize(node, buffer);
+
+    std::fstream output(fileName, std::ios::out | std::ios::binary);
+    output.write(buffer.data(), buffer.size());
+
+    std::cout << "N-ary tree was serialized to file " << fileName << std::endl;
 }

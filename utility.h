@@ -23,5 +23,14 @@ ntree::TreeNode createTestTree();
  */
 void testNTree();
 
+/*
+ * Десериализация дерева из файла
+ */
+ntree::TreeNode deserializeFile(const std::string& fileName);
+
+/*
+ * Сериализация дерева в файл
+ */
+void serializeTree(const ntree::TreeNode& node, const std::string &fileName);
 
 #endif // UTILITY_H
