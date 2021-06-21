@@ -8,10 +8,12 @@ SOURCES += \
         main.cpp \
         ntree.cpp \
         ntreeserializer.cpp \
+    typeserializers.cpp \
         utility.cpp \
 
 HEADERS += \
     cmdargparser.h \
     ntree.h \
     ntreeserializer.h \
+    typeserializers.h \
     utility.h \

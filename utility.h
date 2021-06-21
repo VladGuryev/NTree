@@ -23,6 +23,20 @@ ntree::TreeNode createTestTree();
  */
 void testNTree();
 
+
+//void charSerializer(char value, std::vector<char>& buffer)
+//{
+//    std::string typeName = "char";
+//    int typeNum = registerType(typeName);
+//    saveToBinary(&typeNum, typeNumberSize, buffer);        // номер типа
+
+//    int sizeOfObject = sizeof(char);
+//    saveToBinary(&sizeOfObject, objectWidthSize, buffer);  // размер объекта
+
+//    buffer.push_back(value);                               // объект
+//};
+
+
 /*
  * Десериализация дерева из файла
  */

@@ -1,126 +1,24 @@
 #include "ntreeserializer.h"
 
-#include <iomanip>
-#include <iostream>
 #include <map>
 
 namespace ntree {
 
+std::unordered_map<std::string, int> NTreeSerializer::typeInfo = {};
 
-// FormatInfo
-namespace
+std::unordered_map<std::type_index, NTreeSerializer::serializer>
+    NTreeSerializer::serializeAnyVisitors =
 {
-    const int headerSize      = 4; // 4 bytes for header with types
-    const int typeNumberSize  = 4; // 4 bytes for typeNumber
-    const int objectWidthSize = 4; // 4 bytes for objectWidthSize
-    const int childCountSize  = 4; // 4 bytes for childCountSize
+    addSerializer<char>(charSerializer, NTreeSerializer::registerType("char")),
+    addSerializer<int>(intSerializer, NTreeSerializer::registerType("int"))
 };
 
-template<class T, class F>
-inline std::pair<const std::type_index, std::function<void(const std::any&, std::vector<char>&)>>
-to_any_serialize_visitor(const F& f)
+std::unordered_map<std::string, NTreeSerializer::deserializer>
+    NTreeSerializer::deserializeAnyVisitors =
 {
-    return std::make_pair(
-        std::type_index(typeid(T)),
-
-        [g = f](const std::any &a, std::vector<char>& buffer)
-        {
-            if constexpr (std::is_void_v<T>)
-                g();
-            else
-                g(std::any_cast<const T&>(a), buffer);
-        }
-        );
-}
-
-static void saveToBinary(const void* addr, std::size_t size, std::vector<char>& buffer)
-{
-    const char* ptr = reinterpret_cast<const char*>(addr);
-    for(std::size_t i = 0; i < size; i++)
-    {
-        char ch = *ptr;
-        buffer.push_back(ch);
-        ptr++;
-    }
-}
-
-static void loadFromBinary(void* addr, std::size_t size, const char* buffer)
-{
-    memcpy(reinterpret_cast<char*>(addr), buffer, size);
-}
-
-////нигде не используется!
-//template<class T, class F>
-//inline void register_any_serialize_visitor(NTreeSerializer& serializer,const F& f)
-//{
-//    std::cout << "Register visitor for type: " << std::quoted(typeid(T).name()) << std::endl;
-//    serializer.serializeAnyVisitors.insert(to_any_serialize_visitor<T>(f));
-//}
-
-NTreeSerializer::NTreeSerializer()
-{
-    auto charSerializer = [&](char value,
-                              std::vector<char>& buffer)
-    {
-        std::string typeName = "char";
-        int typeNum = registerType(typeName);
-        saveToBinary(&typeNum, typeNumberSize, buffer);        // номер типа
-
-        int sizeOfObject = sizeof(char);
-        saveToBinary(&sizeOfObject, objectWidthSize, buffer);  // размер объекта
-
-        buffer.push_back(value);                               // объект
-    };
-
-    serializeAnyVisitors.insert( to_any_serialize_visitor<char>(charSerializer) );
-
-    auto intSerializer = [&](int value,
-                             std::vector<char>& buffer)
-    {
-        std::string typeName = "int";
-        int typeNum = registerType(typeName);
-        saveToBinary(&typeNum, typeNumberSize, buffer);           // номер типа
-        saveToBinary(&objectWidthSize, objectWidthSize, buffer);  // размер объекта
-        saveToBinary(&value, objectWidthSize, buffer);            // объект
-    };
-
-    serializeAnyVisitors.insert( to_any_serialize_visitor<int>(intSerializer) );
-
-    auto charDeserializer = [&](const std::vector<char> &buffer,
-                                const TypeInfo &typeInfo) ->std::any
-    {
-        char value;
-        if(typeInfo.objectSize == 1)
-            value = buffer[typeInfo.index];
-
-       // std::cout << "char deserializer called!\n";
-
-        return value;
-    };
-    deserializeAnyVisitors["char"] = charDeserializer;
-
-    auto intDeserializer = [&](const std::vector<char> &buffer,
-                               const TypeInfo &typeInfo) ->std::any
-    {
-        int value;
-        if(typeInfo.objectSize == 4)
-        {
-            loadFromBinary(&value, typeInfo.objectSize, &buffer[typeInfo.index]);
-        }
-
-       // std::cout << "int deserializer called!\n";
-
-        return value;
-    };
-    deserializeAnyVisitors["int"] = intDeserializer;
-
-   // std::cout << "***********************\n";
-//    for(auto& [type, i] : deserializeAnyVisitors)
-//    {
-       // std::cout << "deserialized type: " << type << std::endl;
- //   }
-   // std::cout << "***********************\n";
-}
+    addDeserializer(charDeserializer, "char"),
+    addDeserializer(intDeserializer, "int")
+};
 
 void NTreeSerializer::serialize(const TreeNode &node,
                                 std::vector<char> &buffer)
@@ -204,8 +102,6 @@ TreeNode NTreeSerializer::deserializeTree(const std::vector<char>& buffer, int& 
 
     typeInfo.objectSize = objectSize;
     typeInfo.index = index;
-
-   // std::cout << "typeNumber: " << typeInfo.typeNum << " " << "objectSize: " << typeInfo.objectSize << std::endl;
 
     std::any value = deserializeAny(buffer, typeInfo);
 
@@ -297,10 +193,6 @@ int NTreeSerializer::loadHeader(const std::vector<char> &buffer)
         typeInfoReversed[typeNumber] = typeName;
     }
 
-    // for(const auto &[typeName, index] : typeInfo)
-    // {
-    //   std::cout << "deserialized typeName: " << typeName << "," << index << std::endl;
-    // }
     return headerByteCount;
 }
 
