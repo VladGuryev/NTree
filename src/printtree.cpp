@@ -32,8 +32,8 @@ void PrintInfo::printAny(const std::any& a)
     }
     else
     {
-        std::cout << "Unregistered type for print: "<< std::quoted(a.type().name());
-        throw std::exception();
+        std::cout << "Node value with unregistered type for print: "
+                  << std::quoted(a.type().name());
     }
     std::cout << std::endl;
 }

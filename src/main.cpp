@@ -1,6 +1,6 @@
 #include "cmdargparser.h"
-#include "utility.h"
 #include "printtree.h"
+#include "utility.h"
 
 //Supported command line arguments
 namespace
@@ -27,6 +27,12 @@ namespace
                                  " 3. Pass -o or --output to set output filename after argument to serialize NTree.\n"
                                  " Possible usage: ./a.out -i tree.data -o tree2.data\n"
                                  "                 ./a.out --input=tree.data\n";
+
+    const std::string noInputErrorMsg = "There is no NTree to deserialize to output file.\n"
+                                        "Program will be stopped.\n";
+
+    const std::string noArgsProvidedErrorMsg = "No arguments provided. Program will be stopped.\n"
+                                               "For more information see help (-h, --help)\n";
 }
 
 void registerSerializers()
@@ -72,12 +78,15 @@ int main(int argc, char* argv[])
     {
         supportedArgsPassed = true;
         outputFileName = outputArg.second;
+        if(!inputArg.first)
+        {
+            std::cout << noInputErrorMsg;
+        }
     }
 
     if(!supportedArgsPassed)
     {
-        std::cout << "No arguments provided. Program will be stopped.\n"
-                     "For more information see help (-h, --help)\n";
+        std::cout << noArgsProvidedErrorMsg;
         return 0;
     }
 
