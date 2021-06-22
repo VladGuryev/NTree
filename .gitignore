@@ -1,1 +1,6 @@
-N-tree.pro.user
+*.pro.user
+.exe
+.out
+/bin
+/lib
+*.txt.user

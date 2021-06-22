@@ -76,7 +76,8 @@ int main(int argc, char* argv[])
 
     if(!supportedArgsPassed)
     {
-        std::cout << "No arguments provided. Program will be stopped." << std::endl;
+        std::cout << "No arguments provided. Program will be stopped.\n"
+                     "For more information see help (-h, --help)\n";
         return 0;
     }
 

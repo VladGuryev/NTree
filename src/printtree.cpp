@@ -57,6 +57,7 @@ void printTree(const TreeNode &node)
     std::cout << "\n";
 }
 
+[[maybe_unused]]
 void ntreeTraverseRecursive(const TreeNode &node, int& depth)
 {
     using namespace std;
