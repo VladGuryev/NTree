@@ -20,7 +20,7 @@ std::unordered_map<std::type_index, PrintInfo::printFunc>
         addPrinter<float>([](float x){ std::cout << std::setprecision(7) << x; }),
         addPrinter<double>([](double x){ std::cout << std::setprecision(13) << x; }),
         addPrinter<char>([](char x){ std::cout << x; }),
-        addPrinter<char const*>([](char const *s){ std::cout << std::quoted(s); }),
+        addPrinter<const char*>([](const char* s){ std::cout << std::quoted(s); }),
     };
 
 void PrintInfo::printAny(const std::any& a)

@@ -26,7 +26,7 @@ namespace
                                  " 2. Pass -i or --input to set input file name after argument to deserialize NTree.\n"
                                  " 3. Pass -o or --output to set output filename after argument to serialize NTree.\n"
                                  " Possible usage: ./a.out -i tree.data -o tree2.data\n"
-                                 "                 ./a.out --input=tree.data";
+                                 "                 ./a.out --input=tree.data\n";
 }
 
 void registerSerializers()
