@@ -1,5 +1,7 @@
 #include "typeserializers.h"
 
+#include <cstring>
+
 namespace ntree
 {
 
@@ -21,7 +23,7 @@ void saveToBinary(const void *addr, std::size_t size, std::vector<char> &buffer)
 
 void loadFromBinary(void *addr, std::size_t size, const char *buffer)
 {
-    memcpy(reinterpret_cast<char*>(addr), buffer, size);
+    std::memcpy(reinterpret_cast<char*>(addr), buffer, size);
 }
 
 void charSerializer(char value, int typeNum, std::vector<char> &buffer)
