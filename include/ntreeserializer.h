@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <iostream>
 #include <typeindex>
+#include <unordered_map>
 
 #include "ntree.h"
 #include "typeserializers.h"
