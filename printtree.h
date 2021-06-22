@@ -46,7 +46,7 @@ private:
 };
 
 template<class T, class F>
-inline void registerPrinter(const F &f, const std::string& typeName)
+inline void registerPrinter(const F &f, const std::string& /*typeName*/)
 {
     //std::cout << "Registered printer for type: " << typeName << std::endl;
     PrintInfo::printAnyVisitors.insert(PrintInfo::addPrinter<T>(f));

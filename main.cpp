@@ -23,8 +23,8 @@ namespace
 
     const std::string helpInfo = "Help information:\n"
                                  " 1. Pass -t or --test without parameters to launch test.\n"
-                                 " 2. Pass -i or --input to set input file name after argument.\n"
-                                 " 3. Pass -o or --output to set output filename after argument.\n"
+                                 " 2. Pass -i or --input to set input file name after argument to deserialize NTree.\n"
+                                 " 3. Pass -o or --output to set output filename after argument to serialize NTree.\n"
                                  " Possible usage: ./a.out -i tree.data -o tree2.data\n"
                                  "                 ./a.out --input=tree.data";
 }

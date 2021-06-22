@@ -14,6 +14,27 @@ std::streamsize fileSize(std::fstream &fs)
     return length;
 }
 
+ntree::TreeNode testTree()
+{
+    using namespace ntree;
+
+    TreeNode root = TreeNode{'A', {}};
+
+    auto& list = root.childList;
+    list.push_back({'B', {}});
+    list.push_back({'C', {}});
+
+    auto& last = list.back();
+    auto& children = last.childList;
+    children.push_back({'D', {}});
+    children.push_back({'E', {}});
+
+    list.push_back({'F', {}});
+    list.push_back({'G', {}});
+
+    return root;
+}
+
 ntree::TreeNode createTestTree()
 {
     using namespace ntree;
@@ -41,6 +62,8 @@ ntree::TreeNode createTestTree()
     children3.push_back({'E',{}});
     children3.push_back({float(1.99),{}});
     children3.push_back({'A',{}});
+
+    children.push_back(testTree());
 
     return root;
 }

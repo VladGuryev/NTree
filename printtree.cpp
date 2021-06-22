@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <typeindex>
+#include <stack>
 
 namespace ntree {
 
@@ -32,11 +33,13 @@ void PrintInfo::printAny(const std::any& a)
     else
     {
         std::cout << "Unregistered type for print: "<< std::quoted(a.type().name());
+        throw std::exception();
     }
     std::cout << std::endl;
 }
 
-static void ntreeTraverse(const TreeNode &node, int& depth);
+static void ntreeTraverseRecursive(const TreeNode &node, int& depth);
+static void ntreeTraverseIterative(const TreeNode &node);
 
 void printTree(const TreeNode &node)
 {
@@ -45,12 +48,16 @@ void printTree(const TreeNode &node)
         return;
     }
     std::cout << "\nNTree:\n";
-    int recursiveDepth = 0;
-    ntreeTraverse(node, recursiveDepth);
+
+    //int recursiveDepth = 0;
+    //ntreeTraverseRecursive(node, recursiveDepth);
+
+    ntreeTraverseIterative(node);
+
     std::cout << "\n";
 }
 
-void ntreeTraverse(const TreeNode &node, int& depth)
+void ntreeTraverseRecursive(const TreeNode &node, int& depth)
 {
     using namespace std;
 
@@ -72,9 +79,53 @@ void ntreeTraverse(const TreeNode &node, int& depth)
     {
         for(const auto& node : node.childList)
         {
-            ntreeTraverse(node, depth);
+            ntreeTraverseRecursive(node, depth);
         }
         depth--;
+    }
+}
+
+void ntreeTraverseIterative(const TreeNode &node)
+{
+    using namespace std;
+
+    std::stack<std::reference_wrapper<const TreeNode>> stack;
+    stack.push(std::cref(node));
+
+    int depth = 0;
+    std::stack<int> childCounts;
+
+    const int firstNodeAsChildSize = 1;    // root node is a single child for hypothetical parent
+    childCounts.push(firstNodeAsChildSize);
+
+    while(!stack.empty())
+    {
+        --childCounts.top();
+        if(childCounts.top() < 0)
+        {
+            childCounts.pop();
+            depth--;
+        }
+
+        for(int i = 0; i < depth; i++)
+        {
+            std::cout  << "    | ";
+        }
+
+        auto n = stack.top();
+        PrintInfo::printAny(n.get().value);
+        stack.pop();
+
+        for(auto it = n.get().childList.rbegin(); it != n.get().childList.rend(); it++)
+        {
+            stack.push(*it);
+        }
+        int childListCount = n.get().childList.size(); // O(1) since C++11
+        if(childListCount)
+        {
+            depth++;
+            childCounts.push(childListCount);
+        }
     }
 }
 
