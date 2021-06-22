@@ -37,7 +37,7 @@ console
 ### Details
 The serialization format is binary. It allows to serialize tree with any type
 that supported by serialization and deserialization functions. POD types
-serializators are provided now and `std::string` as example of custom type. 
+serializators are provided out of the box and `std::string` as example of custom type. 
 To add your own type for support you should write functions with signatures:
 ```
 serializer - void(const std::any&, std::vector<char>&)
@@ -49,6 +49,9 @@ std::string typeName = "std::string";
 ntree::registerSerializer<std::string>(ntree::stdStringSerializer, typeName);
 ntree::registerDeserializer(ntree::stdStringDeserializer, typeName);
 ```
+While serializing the dynamic type of value in `std::any` is resolved and the appropriate serialization function is chosen
+if registered. Same for deserialization. If there is no (de)serialization function for some type, the exception is thrown.
+
 For printing type in console while pre-order tree traversal provide function with signature:
 ```
 void(const std::any&)
@@ -57,6 +60,9 @@ where `std::any` can be of any type, obviously. Register print function in the f
 ```
  ntree::registerPrinter<std::string>([](const std::string& str){ std::cout << str; }, typeName);
 ```
+If there is no printing function registered in the framework for the type of any node, the error will be printed on the
+place of that node in the tree.
+
 
 ### Serialization format
 
@@ -81,7 +87,7 @@ data frame is finished by its children count size which might equal to zero.
 
 ##### Header section structure is described in the table below:
 
-| Header size  | Type name size_1  |Type name string_1| Type name size_2| Type name string_1|...|
+| Header size  | Type name size_1  |Type name string_1| Type name size_2| Type name string_2|...|
 | ------------- | ------------- |------------- |------------- |------------- |------------- |
 | 4 bytes  | 4 bytes  | N1 bytes  | 4 bytes | N2 bytes|
 | M bytes  | N1  |  | N2|
