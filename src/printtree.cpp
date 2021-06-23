@@ -45,6 +45,7 @@ void printTree(const TreeNode &node)
 {
     if(!node.value.has_value())
     {
+        std::cout << "Empty tree for printing\n";
         return;
     }
     std::cout << "\nNTree:\n";

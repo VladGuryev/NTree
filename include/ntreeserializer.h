@@ -32,7 +32,7 @@ private:
     void serializeTree(const TreeNode &node, std::vector<char> &buffer);
     TreeNode deserializeTree(const std::vector<char>& buffer, int& index);
 
-    void serializeAny(const std::any& a, std::vector<char>& buffer);
+    void serializeAny(const std::any& a, std::vector<char> &buffer);
     std::any deserializeAny(const std::vector<char> &buffer, const TypeInfo &typeInfo);
 
     int saveHeader(std::vector<char> &buffer);

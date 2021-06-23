@@ -94,13 +94,13 @@ TreeNode NTreeSerializer::deserialize(const std::vector<char>& buffer)
         return TreeNode{};
     }
 
-    int index = loadHeader(buffer);
+    int headerShift = loadHeader(buffer);
 
     TreeNode root;
 
     try
     {
-        root = deserializeTree(buffer, index);
+        root = deserializeTree(buffer, headerShift);
     }
     catch (const SerializerException& se)
     {
@@ -143,7 +143,7 @@ TreeNode NTreeSerializer::deserializeTree(const std::vector<char>& buffer, int& 
 {
     if(index < headerSize + objectWidthSize)
     {
-        throw SerializerException("Invalid header format while deserializatio");
+        throw SerializerException("Invalid header format while deserializing");
     }
 
     TypeInfo typeInfo;
