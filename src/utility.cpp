@@ -35,6 +35,11 @@ ntree::TreeNode testTree()
     return root;
 }
 
+struct TestUnregisteredStruct
+{
+    std::vector<int> m = {1,2};
+} testUnregisteredStruct;
+
 ntree::TreeNode createTestTree()
 {
     using namespace ntree;
@@ -47,6 +52,7 @@ ntree::TreeNode createTestTree()
 
     auto& front = list.front();
     auto& children2 = front.childList;
+    //children2.push_back({testUnregisteredStruct, {}});
     children2.push_back({'H', {}});
     children2.push_back({std::string("str_1A"), {}});
     children2.push_back({std::string("str_2B"), {}});
@@ -110,6 +116,10 @@ ntree::TreeNode deserializeFile(const std::string &fileName)
     input.read(buffer.data(), fz);
 
     auto root = s.deserialize(buffer);
+    if(!root.value.has_value())
+    {
+        return ntree::TreeNode{};
+    }
 
     std::cout << "N-ary tree was deserialized from file " << fileName << std::endl;
     return root;
@@ -131,6 +141,11 @@ void serializeTree(const ntree::TreeNode &node, const std::string& fileName)
     std::vector<char> buffer;
 
     s.serialize(node, buffer);
+    if(buffer.empty())
+    {
+        std::cout << "Error while serializing tree\n";
+        return;
+    }
 
     std::fstream output(fileName, std::ios::out | std::ios::binary);
     output.write(buffer.data(), buffer.size());

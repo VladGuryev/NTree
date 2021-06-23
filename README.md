@@ -1,8 +1,20 @@
 # Heterogeneous  N-ary tree with (de)serialization functionality
 ---
+
+### Description
+
+Heterogeneous N-ary tree allows to store in nodes values of any type. You can add node with any value
+not caring about its type in runtime. But there are some limitations in usage of additional functionality.
+If tree is needed to be printed in console the printing functions for every presented type should be registered in the
+framework. Ths is also true for serialization and deserialization. The tree provides convenient API to register any type
+handlers you want.
+
 ### Limitations:
-- Number of children in one node: 2^31 – 1
-- Max size of node value: 2^31 – 1 bytes
+- Max size of node value: 2<sup>31</sup> – 1 bytes
+- Max number of children of one node: 2<sup>31</sup> – 1
+- There is no exact number for quantity of types that can be registered, but assuming the type name
+can be stored in 16 bytes, so the total amount of types is not more than 10<sup>8</sup> that should be enough for many
+applications.
 
 ### Prerequisites
 - C++17 
@@ -81,7 +93,9 @@ data frame is finished by its children count size which might equal to zero.
 * header size section (4 bytes int) - the amount of bytes in the header section from the first to the last byte.
 * type string size (4 bytes int) - 4 bytes to store the number of bytes of string type name
 * string type name (arbitrary amount of bytes)
-...
+
+* ...
+
 * another type string size
 * another string type name
 
@@ -104,4 +118,4 @@ data frame is finished by its children count size which might equal to zero.
 | Type number of node_1  | Object size of node_1  | Object node_1| Children count of node_1 | Type number of node_i|...|
 | ------------- | ------------- |------------- |------------- |------------- |------------- |
 | 4 bytes  | 4 bytes  | N1 bytes  | 4 bytes | 4 bytes|
-| index of type_1 in the type list  | N1  |  | K children| index of type in the type_i list|
+| index of type_1 in the type list  | N1  |  | K children| index of type_i in the type list|

@@ -68,12 +68,12 @@ private:
                                      const std::string& typeName);
 private:
 
-    static inline int typeNumber = 1;
-    static std::unordered_map<std::string, int> typeInfo;   //typename to its index
-    std::unordered_map<int, std::string> typeInfoReversed;  // typename index to its name
+    static inline int s_typeNumber = 1;
+    static std::unordered_map<std::string, int> m_typeInfo;
+    std::unordered_map<int, std::string> m_typeInfoReversed;
 
-    static std::unordered_map<std::type_index, serializer> serializeAnyVisitors;
-    static std::unordered_map<std::string, deserializer>   deserializeAnyVisitors;
+    static std::unordered_map<std::type_index, serializer> s_serializeAnyVisitors;
+    static std::unordered_map<std::string, deserializer>   s_deserializeAnyVisitors;
 };
 
 template<class T, class F>
@@ -81,7 +81,7 @@ inline void registerSerializer(const F& serializer,
                                const std::string& typeName)
 {
     //std::cout << "Registered serializer for type: " << typeName << std::endl;
-    NTreeSerializer::serializeAnyVisitors.insert(
+    NTreeSerializer::s_serializeAnyVisitors.insert(
         NTreeSerializer::addSerializer<T>(serializer, NTreeSerializer::registerType(typeName)));
 }
 

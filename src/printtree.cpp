@@ -12,7 +12,7 @@ namespace ntree {
  * Predefined printers for POD types
  */
 std::unordered_map<std::type_index, PrintInfo::printFunc>
-    PrintInfo::printAnyVisitors
+    PrintInfo::s_printAnyVisitors
     {
         addPrinter<void>([]{ std::cout << "{}"; }),
         addPrinter<int>([](int x){ std::cout << x; }),
@@ -25,14 +25,14 @@ std::unordered_map<std::type_index, PrintInfo::printFunc>
 
 void PrintInfo::printAny(const std::any& a)
 {
-    if (const auto it =  printAnyVisitors.find(std::type_index(a.type()));
-        it !=  printAnyVisitors.cend())
+    if (const auto it =  s_printAnyVisitors.find(std::type_index(a.type()));
+        it !=  s_printAnyVisitors.cend())
     {
         it->second(a);
     }
     else
     {
-        std::cout << "Node value with unregistered type for print: "
+        std::cout << "Unregistered node type for print: "
                   << std::quoted(a.type().name());
     }
     std::cout << std::endl;

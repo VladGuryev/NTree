@@ -1,17 +1,45 @@
 #include "ntreeserializer.h"
 
 #include <map>
+#include <stdexcept>
+#include <sstream>
 
 namespace ntree {
 
+class SerializerException : public std::runtime_error
+{
+public:
+    SerializerException(const std::string& error, const std::string& type = "")
+        : std::runtime_error(error), m_error(error), m_type(type) {}
 
-std::unordered_map<std::string, int> NTreeSerializer::typeInfo = {};
+    std::string type() const
+    {
+        if(m_type.empty())
+        {
+            return "";
+        }
+        m_ss << std::quoted(m_type);
+        return m_ss.str();
+    }
+
+    std::string error() const
+    {
+        return m_error;
+    }
+
+private:
+    std::string m_error = "";
+    std::string m_type = "";
+    mutable std::stringstream m_ss;
+};
+
+std::unordered_map<std::string, int> NTreeSerializer::m_typeInfo = {};
 
 /*
  * Predefined serializers for POD types
  */
 std::unordered_map<std::type_index, NTreeSerializer::serializer>
-    NTreeSerializer::serializeAnyVisitors =
+    NTreeSerializer::s_serializeAnyVisitors =
 {
     addSerializer<char>(charSerializer, NTreeSerializer::registerType("char")),
     addSerializer<int>(intSerializer, NTreeSerializer::registerType("int")),
@@ -23,7 +51,7 @@ std::unordered_map<std::type_index, NTreeSerializer::serializer>
  * Predefined deserializers for POD types
  */
 std::unordered_map<std::string, NTreeSerializer::deserializer>
-    NTreeSerializer::deserializeAnyVisitors =
+    NTreeSerializer::s_deserializeAnyVisitors =
 {
     addDeserializer(charDeserializer, "char"),
     addDeserializer(intDeserializer, "int"),
@@ -34,7 +62,21 @@ std::unordered_map<std::string, NTreeSerializer::deserializer>
 void NTreeSerializer::serialize(const TreeNode &node, std::vector<char> &buffer)
 {
     std::vector<char> treeBuffer;
-    serializeTree(node,treeBuffer);
+
+    try
+    {
+        serializeTree(node,treeBuffer);
+    }
+    catch (const SerializerException& se)
+    {
+        std::cout << se.error() << " " << se.type() << std::endl;
+        return;
+    }
+    catch (...)
+    {
+       std::cout << "Unregistered exception thrown while serializing tree" << std::endl;
+       return;
+    }
 
     std::vector<char> headerBuffer;
     int headerByteCount = saveHeader(headerBuffer);
@@ -52,7 +94,25 @@ TreeNode NTreeSerializer::deserialize(const std::vector<char>& buffer)
     }
 
     int index = loadHeader(buffer);
-    return deserializeTree(buffer, index);
+
+    TreeNode root;
+
+    try
+    {
+        root = deserializeTree(buffer, index);
+    }
+    catch (const SerializerException& se)
+    {
+        std::cout << se.error() << " " << se.type() << std::endl;
+        return root;
+    }
+    catch (...)
+    {
+        std::cout << "Unregistered exception thrown while deserializing tree" << std::endl;
+        return root;
+    }
+
+    return root;
 }
 
 void NTreeSerializer::serializeTree(const TreeNode &node, std::vector<char> &buffer)
@@ -63,10 +123,11 @@ void NTreeSerializer::serializeTree(const TreeNode &node, std::vector<char> &buf
     }
 
     serializeAny(node.value, buffer);
+
     int childListSize = node.childList.size();
     saveToBinary(&childListSize, childCountSize, buffer);
 
-    for(auto& child: node.childList)
+    for(const auto& child: node.childList)
     {
         serializeTree(child, buffer);
     }
@@ -74,6 +135,11 @@ void NTreeSerializer::serializeTree(const TreeNode &node, std::vector<char> &buf
 
 TreeNode NTreeSerializer::deserializeTree(const std::vector<char>& buffer, int& index)
 {
+    if(index < headerSize + objectWidthSize)
+    {
+        throw SerializerException("Invalid header format while deserializatio");
+    }
+
     TypeInfo typeInfo;
     loadFromBinary(&typeInfo.typeNum, typeNumberSize, &buffer[index]);
     index += typeNumberSize;
@@ -106,31 +172,29 @@ TreeNode NTreeSerializer::deserializeTree(const std::vector<char>& buffer, int& 
 
 void NTreeSerializer::serializeAny(const std::any& a, std::vector<char>& buffer)
 {
-    if (const auto it = serializeAnyVisitors.find(std::type_index(a.type()));
-        it !=  serializeAnyVisitors.cend())
+    if (const auto it = s_serializeAnyVisitors.find(std::type_index(a.type()));
+        it !=  s_serializeAnyVisitors.cend())
     {
         it->second(a, buffer);
     }
     else
     {
-        std::cout << "Unregistered type for serialization "<< std::quoted(a.type().name());
-        throw std::exception();
+        throw SerializerException("Unregistered type for serialization", a.type().name());
     }
 }
 
 std::any NTreeSerializer::deserializeAny(const std::vector<char> &buffer, const TypeInfo &typeInfo)
 {
-    std::string typeName(typeInfoReversed[typeInfo.typeNum]);
+    std::string typeName(m_typeInfoReversed[typeInfo.typeNum]);
 
-    if (const auto it = deserializeAnyVisitors.find(typeName);
-        it !=  deserializeAnyVisitors.cend())
+    if (const auto it = s_deserializeAnyVisitors.find(typeName);
+        it !=  s_deserializeAnyVisitors.cend())
     {
         return it->second(buffer, typeInfo);
     }
     else
     {
-        std::cout << "Unregistered type for deserialization "<< std::quoted(typeName);
-        throw std::exception();
+        throw SerializerException("Unregistered type for deserialization", typeName);
     }
 }
 
@@ -142,7 +206,7 @@ int NTreeSerializer::saveHeader(std::vector<char> &buffer)
     // Чтобы перечень типов в хедере файла
     // был отсортирован по возрастанию номера типа и не было необходимости хранить
     // в хедере еще и номер типа рядом с его именем
-    for(const auto &[typeName, index] : typeInfo)
+    for(const auto &[typeName, index] : m_typeInfo)
     {
         typeInfoSorted[index] = typeName;
     }
@@ -160,13 +224,13 @@ int NTreeSerializer::saveHeader(std::vector<char> &buffer)
 
 int NTreeSerializer::registerType(const std::string &typeName)
 {
-    auto it = typeInfo.find(typeName);
-    if(it == typeInfo.end())
+    auto it = m_typeInfo.find(typeName);
+    if(it == m_typeInfo.end())
     {
-        typeInfo[typeName] = typeNumber;
-        return typeNumber++;
+        m_typeInfo[typeName] = s_typeNumber;
+        return s_typeNumber++;
     }
-    return typeInfo[typeName];
+    return m_typeInfo[typeName];
 }
 
 std::pair<std::string, NTreeSerializer::deserializer>
@@ -183,8 +247,8 @@ int NTreeSerializer::loadHeader(const std::vector<char> &buffer)
         return 0;
     }
 
-    typeNumber = 1;
-    typeInfo.clear();
+    s_typeNumber = 1;
+    m_typeInfo.clear();
 
     int headerByteCount = 0;
     loadFromBinary(&headerByteCount, headerSize, buffer.data());
@@ -202,7 +266,7 @@ int NTreeSerializer::loadHeader(const std::vector<char> &buffer)
         index += length;
 
         int typeNumber = registerType(typeName);
-        typeInfoReversed[typeNumber] = typeName;
+        m_typeInfoReversed[typeNumber] = typeName;
     }
 
     return headerByteCount;
@@ -212,7 +276,7 @@ void registerDeserializer(const NTreeSerializer::deserializer &deserializer,
                           const std::string &typeName)
 {
     //std::cout << "Registered deserializer for type: " << typeName << std::endl;
-    NTreeSerializer::deserializeAnyVisitors[typeName] = deserializer;
+    NTreeSerializer::s_deserializeAnyVisitors[typeName] = deserializer;
 }
 
 } // ntree

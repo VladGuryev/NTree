@@ -42,14 +42,14 @@ private:
     friend inline void registerPrinter(const F &f, const std::string& typeName);
 
 private:
-    static std::unordered_map<std::type_index, printFunc> printAnyVisitors;
+    static std::unordered_map<std::type_index, printFunc> s_printAnyVisitors;
 };
 
 template<class T, class F>
 inline void registerPrinter(const F &f, const std::string& /*typeName*/)
 {
     //std::cout << "Registered printer for type: " << typeName << std::endl;
-    PrintInfo::printAnyVisitors.insert(PrintInfo::addPrinter<T>(f));
+    PrintInfo::s_printAnyVisitors.insert(PrintInfo::addPrinter<T>(f));
 }
 
 } // ntree
