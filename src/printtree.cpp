@@ -121,6 +121,7 @@ void ntreeTraverseIterative(const TreeNode &node)
         {
             stack.push(*it);
         }
+
         int childListCount = n.get().childList.size(); // O(1) since C++11
         if(childListCount)
         {

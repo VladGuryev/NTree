@@ -36,6 +36,11 @@ or
 ```
 [build]$ ./NTree  -t
 ```
+If you have some `treeIn.data` file assuming it has tree inside 
+it can be serialized to `treeOut.data` like this:
+```
+[build]$ ./NTree  -i treeIn.data -o treeOut.data
+```
 
 ### Command line arguments
 The program supports _4_ types of arguments:

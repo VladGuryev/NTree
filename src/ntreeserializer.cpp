@@ -3,6 +3,7 @@
 #include <map>
 #include <stdexcept>
 #include <sstream>
+#include <stack>
 
 namespace ntree {
 
@@ -117,19 +118,24 @@ TreeNode NTreeSerializer::deserialize(const std::vector<char>& buffer)
 
 void NTreeSerializer::serializeTree(const TreeNode &node, std::vector<char> &buffer)
 {
-    if(!node.value.has_value())
+    std::stack<std::reference_wrapper<const TreeNode>> stack;
+    stack.push(std::cref(node));
+
+    while(!stack.empty())
     {
-        return;
-    }
+        auto curNode = stack.top();
+        serializeAny(curNode.get().value, buffer);
 
-    serializeAny(node.value, buffer);
+        int childListSize = curNode.get().childList.size();
+        saveToBinary(&childListSize, childCountSize, buffer);
 
-    int childListSize = node.childList.size();
-    saveToBinary(&childListSize, childCountSize, buffer);
+        stack.pop();
 
-    for(const auto& child: node.childList)
-    {
-        serializeTree(child, buffer);
+        for(auto it = curNode.get().childList.rbegin();
+            it != curNode.get().childList.rend(); it++)
+        {
+            stack.push(*it);
+        }
     }
 }
 
