@@ -6,7 +6,7 @@
 Heterogeneous N-ary tree allows to store in nodes values of any type. You can add node with any value
 not caring about its type in runtime. But there are some limitations in usage of additional functionality.
 If tree is needed to be printed in console the printing functions for every presented type should be registered in the
-framework. Ths is also true for serialization and deserialization. The tree provides convenient API to register any type
+framework. This is also true for serialization and deserialization. The tree provides convenient API to register any type
 handlers you want.
 
 ### Limitations:
@@ -46,7 +46,7 @@ it can be serialized to `treeOut.data` like this:
 The program supports _4_ types of arguments:
 * `-h (--help)` help info
 * `-t (--test)` program will be launched with programly generated tree that will be
-serialized to test_tree.data and deserialized back from that file and printed in the
+serialized to `test_tree.data` and deserialized back from that file and printed in the
 console
 * `-i (--input)` to set input file name for deserialization
 * `-o (--output)` to set output file name for serialization

@@ -100,7 +100,8 @@ TreeNode NTreeSerializer::deserialize(const std::vector<char>& buffer)
 
     try
     {
-        root = deserializeTree(buffer, headerShift);
+        //root = deserializeTreeRecursive(buffer,headerShift);
+        root = deserializeTreeIterative(buffer, headerShift);
     }
     catch (const SerializerException& se)
     {
@@ -139,7 +140,8 @@ void NTreeSerializer::serializeTree(const TreeNode &node, std::vector<char> &buf
     }
 }
 
-TreeNode NTreeSerializer::deserializeTree(const std::vector<char>& buffer, int& index)
+[[maybe_unused]]
+TreeNode NTreeSerializer::deserializeTreeRecursive(const std::vector<char>& buffer, int& index)
 {
     if(index < headerSize + objectWidthSize)
     {
@@ -170,11 +172,111 @@ TreeNode NTreeSerializer::deserializeTree(const std::vector<char>& buffer, int& 
 
     for (int i = 0; i < childrenCount; i++)
     {
-        childList.push_back(deserializeTree(buffer,index));
+        childList.push_back(deserializeTreeRecursive(buffer,index));
     }
 
     return node;
 }
+
+TreeNode NTreeSerializer::deserializeTreeIterative(const std::vector<char>& buffer, int index)
+{
+    if(index < headerSize + objectWidthSize)
+    {
+        throw SerializerException("Invalid header format while deserialization");
+    }
+
+    int dIndex = index;
+
+    struct Frame
+    {
+        TypeInfo typeInfo;
+        int objectSize = 0;
+        int childrenCount = 0;
+    } frame;
+
+    std::stack<Frame> stack;
+    stack.push(frame);
+
+    std::stack<int> childCounts;
+    const int firstNodeAsChildSize = 1;
+    childCounts.push(firstNodeAsChildSize);
+
+    std::list<TreeNode> subTreeStorage;
+    std::stack<TreeNode*> parents;
+    parents.push(nullptr);
+
+    while(!stack.empty())
+    {
+        --childCounts.top();
+        if(childCounts.top() < 0)
+        {
+            childCounts.pop();
+
+            TreeNode* subTree = parents.top();
+            parents.pop();
+
+            auto& childsOfSubTree = parents.top()->childList.back().childList;
+            childsOfSubTree.splice(childsOfSubTree.end(), subTree->childList);
+        }
+
+        auto frame = stack.top();
+
+        loadFromBinary(&frame.typeInfo.typeNum, typeNumberSize, &buffer[dIndex]);
+        dIndex += typeNumberSize;
+
+        loadFromBinary(&frame.objectSize, objectWidthSize, &buffer[dIndex]);
+        dIndex += objectWidthSize;
+
+        frame.typeInfo.objectSize = frame.objectSize;
+        frame.typeInfo.index = dIndex;
+
+        std::any value = deserializeAny(buffer, frame.typeInfo);
+
+        dIndex += frame.objectSize;
+        loadFromBinary(&frame.childrenCount, childCountSize, &buffer[dIndex]);
+
+        dIndex += childCountSize;
+
+        TreeNode node = TreeNode{ value, {} };
+
+        if(parents.top())
+        {
+            parents.top()->childList.push_back(node);
+        }
+
+        stack.pop();
+
+        for(int i = 0; i < frame.childrenCount; i++)
+        {
+            Frame childrenFrames;
+            stack.push(childrenFrames);
+        }
+
+        if(frame.childrenCount)
+        {
+            subTreeStorage.push_back(node);
+            parents.push(&subTreeStorage.back());
+            childCounts.push(frame.childrenCount);
+        }
+    }
+
+    TreeNode* subTree = nullptr;
+    while(parents.top())
+    {
+        subTree = parents.top();
+        parents.pop();
+        if(!parents.top())
+        {
+            break;
+        }
+
+        auto& childsOfSubTree = parents.top()->childList.back().childList;
+        childsOfSubTree.splice(childsOfSubTree.end(), subTree->childList);
+    }
+
+    return subTree ? *subTree : TreeNode{};
+}
+
 
 void NTreeSerializer::serializeAny(const std::any& a, std::vector<char>& buffer)
 {
